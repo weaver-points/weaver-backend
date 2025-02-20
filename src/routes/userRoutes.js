@@ -1,23 +1,25 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const validate = require('../middlewares/validate');
+const userSchema = require('../validations/userValidation');
 
-router.post("/register", async (req, res) => {
+router.post("/register", validate(userSchema), async (req, res, next) => {
     try {
         const user = new User(req.body);
         await user.save();
         res.status(201).json(user);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        next(error);  
     }
 });
 
-router.get("/users", async (req, res) => {
+router.get("/users", async (req, res, next) => {
     try {
         const users = await User.find();
         res.json(users);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        next(error);
     }
 });
 

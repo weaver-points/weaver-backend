@@ -3,10 +3,14 @@ const express = require("express");
 const mongoose = require("mongoose");
 require("dotenv").config();
 
+const errorHandler = require("./middlewares/errorHandler");
+
 const app = express();
 
 // Middleware
 app.use(express.json());
+
+app.use(errorHandler);  
 
 // Database connection
 mongoose
