@@ -22,6 +22,7 @@ import {
   ZkKycVerification,
   ZkKycVerificationSchema,
 } from './zk-kyc/entities/zk-kyc-verification.entity';
+import { OnboardingModule } from './user-onboarding/user-onboarding.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import {
     NftsModule,
     OnchainNotificationsModule,
     ZkKycModule,
+    OnboardingModule,
   ],
 })
 export class AppModule {}

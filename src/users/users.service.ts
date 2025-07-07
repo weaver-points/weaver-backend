@@ -50,4 +50,8 @@ export class UsersService {
     }
     return deletedUser;
   }
+
+  async findById(userId: string): Promise<User | null> {
+    return this.userModel.findById(userId).exec();
+  }
 }
