@@ -23,6 +23,7 @@ import {
   ZkKycVerificationSchema,
 } from './zk-kyc/entities/zk-kyc-verification.entity';
 import { OnboardingModule } from './user-onboarding/user-onboarding.module';
+import { EventManagementModule } from './event-management/event-management.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { OnboardingModule } from './user-onboarding/user-onboarding.module';
     OnchainNotificationsModule,
     ZkKycModule,
     OnboardingModule,
+    EventManagementModule,
   ],
 })
 export class AppModule {}
