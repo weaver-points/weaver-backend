@@ -63,8 +63,17 @@ export class EventSubscriberService implements OnModuleInit, OnModuleDestroy {
       payload: Record<string, unknown>;
       metadata?: Record<string, unknown>;
     };
+
+    if (!type || typeof type !== 'string' || type.trim() === '') {
+      this.logger.error(
+        `Received event with invalid type: ${type ?? 'undefined'}`,
+      );
+      return;
+    }
+
     const cursor = this.subscriptionModel
       .find({ enabled: true, eventTypes: type })
+      .lean()
       .cursor();
     for await (const sub of cursor) {
       if (!sub.filter || Object.keys(sub.filter).length === 0) {

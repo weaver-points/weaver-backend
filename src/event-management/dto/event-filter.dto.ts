@@ -20,13 +20,30 @@ export class EventFilterDto {
   @ArrayMaxSize(20, { message: 'Maximum 20 event types allowed' })
   @IsString({ each: true })
   @Transform(({ value }) => {
+    if (value == null) {
+      return undefined;
+    }
+    let tokens: string[];
     if (typeof value === 'string') {
-      return value
+      tokens = value
         .split(',')
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
+    } else if (Array.isArray(value)) {
+      tokens = value
+        .map(String)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+    } else {
+      return undefined;
     }
-    return (value || []) as string[];
+    const seen = new Set();
+    const deduped = tokens.filter((item) => {
+      if (seen.has(item)) return false;
+      seen.add(item);
+      return true;
+    });
+    return deduped.length > 0 ? deduped : undefined;
   })
   types?: string[];
 
@@ -59,13 +76,30 @@ export class EventFilterDto {
   @IsObject()
   @Transform(({ value }) => {
     if (typeof value === 'string') {
+      if (value.trim() === '') return undefined;
       try {
-        return JSON.parse(value) as Record<string, unknown>;
+        const parsed: unknown = JSON.parse(value);
+        if (
+          parsed !== null &&
+          typeof parsed === 'object' &&
+          Object.prototype.toString.call(parsed) === '[object Object]'
+        ) {
+          return parsed as Record<string, unknown>;
+        } else {
+          return undefined;
+        }
       } catch {
-        return {} as Record<string, unknown>;
+        return undefined;
       }
+    } else if (
+      value !== null &&
+      typeof value === 'object' &&
+      Object.prototype.toString.call(value) === '[object Object]'
+    ) {
+      return value as Record<string, unknown>;
+    } else {
+      return undefined;
     }
-    return (value || {}) as Record<string, unknown>;
   })
   metadata?: Record<string, unknown>;
 

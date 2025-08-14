@@ -10,7 +10,7 @@ import {
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import type { Socket } from 'socket.io';
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger, Inject, OnModuleDestroy } from '@nestjs/common';
 import { Redis } from 'ioredis';
 
 import { ConfigService } from '@nestjs/config';
@@ -26,8 +26,6 @@ interface EventPayload {
 interface SubscriptionData {
   channel: string;
 }
-
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 @WebSocketGateway({
   namespace: '/events',
   cors: {
@@ -39,7 +37,11 @@ interface SubscriptionData {
 })
 @Injectable()
 export class EventWebsocketGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+  implements
+    OnGatewayInit,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnModuleDestroy
 {
   private readonly logger = new Logger(EventWebsocketGateway.name);
   private subClient: Redis;
@@ -48,6 +50,7 @@ export class EventWebsocketGateway
   private readonly allowedChannelPattern =
     /^(events:|streams:)[a-zA-Z0-9._-]+$/;
   private clientChannels = new Map<string, Set<string>>();
+  private clientIdleTimers = new Map<string, NodeJS.Timeout>();
 
   @WebSocketServer()
   server!: Server;
@@ -56,7 +59,7 @@ export class EventWebsocketGateway
     @Inject('Redis') private readonly redisClient: Redis,
     private readonly configService: ConfigService,
   ) {
-    this.subClient = new Redis(redisClient.options);
+    this.subClient = redisClient.duplicate();
   }
 
   afterInit() {
@@ -87,17 +90,24 @@ export class EventWebsocketGateway
     this.logger.log(`Client connected ${client.id}`);
     this.clientChannels.set(client.id, new Set());
 
-    // Set connection timeout
-    setTimeout(() => {
+    const timeoutHandle = setTimeout(() => {
       if (client.connected && this.clientChannels.get(client.id)?.size === 0) {
         client.disconnect(true);
         this.logger.warn(`Disconnected idle client ${client.id}`);
       }
+      this.clientIdleTimers.delete(client.id);
     }, 30000); // 30 seconds
+    this.clientIdleTimers.set(client.id, timeoutHandle);
   }
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected ${client.id}`);
+    const timeoutHandle = this.clientIdleTimers.get(client.id);
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+      this.clientIdleTimers.delete(client.id);
+    }
+
     const channels = this.clientChannels.get(client.id);
     if (channels) {
       channels.forEach((channel) => {
@@ -160,6 +170,12 @@ export class EventWebsocketGateway
       clientChannels.add(channel);
       this.clientChannels.set(client.id, clientChannels);
 
+      const timeoutHandle = this.clientIdleTimers.get(client.id);
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+        this.clientIdleTimers.delete(client.id);
+      }
+
       if (!this.subscribedChannels.has(channel)) {
         await this.subClient.subscribe(channel);
         this.subscribedChannels.add(channel);
@@ -199,6 +215,15 @@ export class EventWebsocketGateway
         `Unsubscribe error for client ${client.id}: ${String(err)}`,
       );
       return { ok: false, error: 'Unsubscribe failed' };
+    }
+  }
+
+  onModuleDestroy() {
+    this.logger.log('Cleaning up Redis subscriber connection');
+    try {
+      this.subClient.disconnect();
+    } catch (err) {
+      this.logger.error(`Error disconnecting Redis subscriber: ${String(err)}`);
     }
   }
 }

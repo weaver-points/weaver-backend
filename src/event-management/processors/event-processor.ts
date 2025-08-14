@@ -13,16 +13,35 @@ export class EventProcessor {
   ) {}
 
   async markProcessed(id: string) {
-    await this.eventModel.findByIdAndUpdate(id, {
-      status: EventStatus.PROCESSED,
-    });
+    try {
+      const result = await this.eventModel.findByIdAndUpdate(id, {
+        status: EventStatus.PROCESSED,
+      });
+      if (!result) {
+        this.logger.warn(`Event not found while marking as processed: ${id}`);
+        throw new Error(`Event not found: ${id}`);
+      }
+    } catch (err) {
+      this.logger.error(
+        `Failed to mark event ${id} as processed: ${String(err)}`,
+      );
+      throw err;
+    }
   }
 
   async markFailed(id: string, reason?: string) {
-    await this.eventModel.findByIdAndUpdate(id, {
-      status: EventStatus.FAILED,
-      'metadata.error': reason,
-    });
+    try {
+      const result = await this.eventModel.findByIdAndUpdate(id, {
+        status: EventStatus.FAILED,
+        'metadata.error': reason,
+      });
+      if (!result) {
+        throw new Error(`Event not found: ${id}`);
+      }
+    } catch (err) {
+      this.logger.error(`Failed to mark event ${id} as failed: ${String(err)}`);
+      throw err;
+    }
   }
 
   async reprocessFailed(limit = 100) {

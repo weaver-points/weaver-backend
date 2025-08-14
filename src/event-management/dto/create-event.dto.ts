@@ -1,6 +1,8 @@
 import {
+  IsDefined,
   IsEnum,
   IsISO8601,
+  IsNotEmptyObject,
   IsObject,
   IsOptional,
   IsString,
@@ -26,17 +28,22 @@ export class CreateEventDto {
   @Length(1, 100)
   source?: string;
 
+  @IsDefined()
+  @IsNotEmptyObject()
   @IsObject()
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      try {
-        return JSON.parse(value) as Record<string, unknown>;
-      } catch {
-        return {} as Record<string, unknown>;
+  @Transform(
+    ({ value }) => {
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value) as Record<string, unknown>;
+        } catch (error) {
+          throw new Error(`Invalid JSON payload: ${String(error)}`);
+        }
       }
-    }
-    return value as Record<string, unknown>;
-  })
+      return value as Record<string, unknown>;
+    },
+    { toClassOnly: true },
+  )
   payload!: Record<string, unknown>;
 
   @IsOptional()

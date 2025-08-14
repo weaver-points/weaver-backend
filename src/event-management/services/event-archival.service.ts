@@ -49,35 +49,33 @@ export class EventArchivalService {
         status: EventStatus.PROCESSED,
         createdAt: { $lt: cutoffDate },
       })
-      .limit(this.batchSize)
-      .cursor();
+      .cursor({ batchSize: this.batchSize });
 
-    for await (const event of archiveCursor) {
-      try {
-        // Here you would typically move to an archive collection or external storage
-        // For now, we'll just mark them for deletion after a longer period
-        const archiveDate = new Date(cutoffDate);
-        archiveDate.setDate(archiveDate.getDate() - 30); // Additional 30 days before deletion
+    try {
+      for await (const event of archiveCursor) {
+        try {
+          const deleteDate = new Date(cutoffDate);
+          deleteDate.setDate(deleteDate.getDate() - 30);
 
-        if (event.createdAt < archiveDate) {
-          await this.eventModel.findByIdAndDelete(event._id);
-          deletedCount++;
-        } else {
-          // Mark as archived (you could add an 'archived' status to EventStatus enum)
-          await this.eventModel.findByIdAndUpdate(event._id, {
-            'metadata.archived': true,
-            'metadata.archivedAt': new Date(),
-          });
-          archivedCount++;
+          if (event.createdAt < deleteDate) {
+            await this.eventModel.findByIdAndDelete(event._id);
+            deletedCount++;
+          } else {
+            await this.eventModel.findByIdAndUpdate(event._id, {
+              'metadata.archived': true,
+              'metadata.archivedAt': new Date(),
+            });
+            archivedCount++;
+          }
+        } catch (error) {
+          this.logger.error(
+            `Failed to archive event ${String(event._id)}: ${String(error)}`,
+          );
         }
-      } catch (error) {
-        this.logger.error(
-          `Failed to archive event ${String(event._id)}: ${String(error)}`,
-        );
       }
+    } finally {
+      await archiveCursor.close();
     }
-
-    // Delete failed events older than retention period (they're less valuable)
     const failedDeleteResult = await this.eventModel.deleteMany({
       status: EventStatus.FAILED,
       createdAt: { $lt: cutoffDate },

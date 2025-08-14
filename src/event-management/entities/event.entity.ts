@@ -14,6 +14,7 @@ export enum EventStatus {
   NEW = 'new',
   PROCESSED = 'processed',
   FAILED = 'failed',
+  PUBLISH_FAILED = 'publish_failed',
 }
 
 @Schema({
@@ -46,6 +47,22 @@ export class EventEntity {
 
   @Prop({ enum: EventStatus, default: EventStatus.NEW })
   status!: EventStatus;
+
+  @Prop({
+    type: [
+      {
+        channel: String,
+        error: String,
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+    default: [],
+  })
+  publishErrors?: Array<{
+    channel: string;
+    error: string;
+    timestamp: Date;
+  }>;
 
   @Prop({ type: Date, default: () => new Date() })
   occurredAt!: Date;

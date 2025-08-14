@@ -23,8 +23,22 @@ export class EventSubscriptionEntity {
   @Prop({ required: false })
   deliveryChannel?: 'websocket' | 'redis' | 'http';
 
-  @Prop({ required: false })
-  webhookUrl?: string; // when deliveryChannel == http
+  @Prop({
+    required: function (this: EventSubscriptionEntity) {
+      return this.deliveryChannel === 'http';
+    },
+    validate: {
+      validator: function (this: EventSubscriptionEntity, v: string) {
+        if (this.deliveryChannel === 'http') {
+          return /^https?:\/\/.+/.test(v);
+        }
+        return true;
+      },
+      message:
+        'Webhook URL must be a valid http/https URL when delivery channel is http',
+    },
+  })
+  webhookUrl?: string; // required when deliveryChannel === 'http'
 }
 
 export const EventSubscriptionSchema = SchemaFactory.createForClass(

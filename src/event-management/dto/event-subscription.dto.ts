@@ -48,7 +48,7 @@ export class CreateEventSubscriptionDto {
       try {
         return JSON.parse(value) as Record<string, unknown>;
       } catch {
-        return {} as Record<string, unknown>;
+        return value;
       }
     }
     return (value || {}) as Record<string, unknown>;
@@ -60,7 +60,19 @@ export class CreateEventSubscriptionDto {
   deliveryChannel?: 'websocket' | 'redis' | 'http';
 
   @ValidateIf((o: CreateEventSubscriptionDto) => o.deliveryChannel === 'http')
-  @IsUrl({}, { message: 'Invalid webhook URL format' })
+  @IsNotEmpty({
+    message: 'Webhook URL is required when delivery channel is http',
+  })
+  @IsUrl(
+    {
+      protocols: ['http', 'https'],
+      require_tld: true,
+      require_protocol: true,
+    },
+    {
+      message: 'Webhook URL must be a valid http/https URL',
+    },
+  )
   @Length(1, 500)
   webhookUrl?: string;
 

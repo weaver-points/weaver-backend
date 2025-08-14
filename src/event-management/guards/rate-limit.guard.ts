@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
   Inject,
+  SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Redis } from 'ioredis';
@@ -20,14 +21,7 @@ export interface RateLimitOptions {
 }
 
 export const RateLimit = (options: RateLimitOptions) => {
-  return (
-    target: object,
-    propertyKey: string,
-    descriptor: PropertyDescriptor,
-  ) => {
-    Reflect.defineMetadata(RATE_LIMIT_KEY, options, target, propertyKey);
-    return descriptor;
-  };
+  return SetMetadata(RATE_LIMIT_KEY, options);
 };
 
 @Injectable()
@@ -103,7 +97,7 @@ export class RateLimitGuard implements CanActivate {
 
     // Default: IP-based rate limiting
     const ip = request.ip || request.socket?.remoteAddress || 'unknown';
-    const endpoint = `${request.method}:${request.url}`;
+    const endpoint = `${request.method}:${request.path}`;
     return `rate_limit:${ip}:${endpoint}`;
   }
 }

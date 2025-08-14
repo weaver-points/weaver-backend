@@ -56,7 +56,12 @@ export class EventManagementService {
 
       for (const [k, v] of metadataEntries) {
         // Prevent NoSQL injection and limit key depth
-        if (k.includes('$') || (k.includes('.') && k.split('.').length > 3)) {
+        const segments = k.split('.').map((segment) => segment.trim());
+        if (
+          k.includes('$') ||
+          segments.length > 3 ||
+          segments.some((segment) => segment === '')
+        ) {
           throw new Error(`Invalid metadata key: ${k}`);
         }
         q[`metadata.${k}`] = v;
@@ -85,10 +90,16 @@ export class EventManagementService {
   }
 
   async findOne(id: string) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      throw new Error('Invalid ID format');
+    }
     return this.eventModel.findById(id).lean();
   }
 
   async update(id: string, dto: UpdateEventDto) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      throw new Error('Invalid ID format');
+    }
     return this.eventModel.findByIdAndUpdate(id, dto, { new: true }).lean();
   }
 
@@ -99,12 +110,13 @@ export class EventManagementService {
       'key' | 'category' | 'jsonSchema' | 'description' | 'tags'
     >,
   ) {
-    await this.eventTypeModel.updateOne(
-      { key: type.key },
-      { $set: type },
-      { upsert: true },
-    );
-    return this.eventTypeModel.findOne({ key: type.key }).lean();
+    return this.eventTypeModel
+      .findOneAndUpdate(
+        { key: type.key },
+        { $set: type },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      )
+      .lean();
   }
 
   async listEventTypes() {
@@ -123,7 +135,7 @@ export class EventManagementService {
       | 'enabled'
     >,
   ) {
-    const doc = new this.subscriptionModel(sub as any);
+    const doc = new this.subscriptionModel(sub);
     return doc.save();
   }
 

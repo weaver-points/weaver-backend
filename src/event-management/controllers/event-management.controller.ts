@@ -73,51 +73,6 @@ export class EventManagementController {
     }
   }
 
-  @Get(':id')
-  async findOne(
-    @Param(new ValidationPipe({ transform: true })) params: MongoIdParam,
-  ) {
-    try {
-      const event = await this.service.findOne(params.id);
-      if (!event) {
-        throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
-      }
-      return event;
-    } catch (error) {
-      if (error instanceof HttpException) throw error;
-      this.logger.error(`Failed to fetch event ${params.id}: ${String(error)}`);
-      throw new HttpException(
-        'Failed to fetch event',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  @Put(':id')
-  async update(
-    @Param(new ValidationPipe({ transform: true })) params: MongoIdParam,
-    @Body(new ValidationPipe({ transform: true, whitelist: true }))
-    dto: UpdateEventDto,
-  ) {
-    try {
-      const event = await this.service.update(params.id, dto);
-      if (!event) {
-        throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
-      }
-      return event;
-    } catch (error) {
-      if (error instanceof HttpException) throw error;
-      this.logger.error(
-        `Failed to update event ${params.id}: ${String(error)}`,
-      );
-      throw new HttpException(
-        'Failed to update event',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  // Event Types
   @Post('types')
   @RateLimit({ windowMs: 60000, maxRequests: 10 }) // 10 type creations per minute
   async upsertType(
@@ -149,7 +104,6 @@ export class EventManagementController {
     }
   }
 
-  // Subscriptions
   @Post('subscriptions')
   @RateLimit({ windowMs: 60000, maxRequests: 20 }) // 20 subscriptions per minute
   async createSub(
@@ -194,7 +148,6 @@ export class EventManagementController {
     }
   }
 
-  // Metrics
   @Get('metrics')
   async metrics(
     @Query(new ValidationPipe({ transform: true, whitelist: true }))
@@ -206,6 +159,50 @@ export class EventManagementController {
       this.logger.error(`Failed to get metrics: ${String(error)}`);
       throw new HttpException(
         'Failed to fetch metrics',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get(':id')
+  async findOne(
+    @Param(new ValidationPipe({ transform: true })) params: MongoIdParam,
+  ) {
+    try {
+      const event = await this.service.findOne(params.id);
+      if (!event) {
+        throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+      }
+      return event;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(`Failed to fetch event ${params.id}: ${String(error)}`);
+      throw new HttpException(
+        'Failed to fetch event',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Put(':id')
+  async update(
+    @Param(new ValidationPipe({ transform: true })) params: MongoIdParam,
+    @Body(new ValidationPipe({ transform: true, whitelist: true }))
+    dto: UpdateEventDto,
+  ) {
+    try {
+      const event = await this.service.update(params.id, dto);
+      if (!event) {
+        throw new HttpException('Event not found', HttpStatus.NOT_FOUND);
+      }
+      return event;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      this.logger.error(
+        `Failed to update event ${params.id}: ${String(error)}`,
+      );
+      throw new HttpException(
+        'Failed to update event',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
