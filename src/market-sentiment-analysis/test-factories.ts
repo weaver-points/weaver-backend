@@ -1,5 +1,7 @@
-xport class TestDataFactory {
-  static createSentimentData(overrides: Partial<SentimentData> = {}): SentimentData {
+export class TestDataFactory {
+  static createSentimentData(
+    overrides: Partial<SentimentData> = {},
+  ): SentimentData {
     return {
       id: Math.random().toString(36).substring(7),
       source: 'twitter',
@@ -15,7 +17,9 @@ xport class TestDataFactory {
     };
   }
 
-  static createMarketPrediction(overrides: Partial<MarketPrediction> = {}): MarketPrediction {
+  static createMarketPrediction(
+    overrides: Partial<MarketPrediction> = {},
+  ): MarketPrediction {
     const predictions = ['bullish', 'bearish', 'neutral'] as const;
     const timeframes = ['1h', '4h', '1d', '1w'] as const;
 
@@ -31,7 +35,9 @@ xport class TestDataFactory {
     };
   }
 
-  static createTradingSignal(overrides: Partial<TradingSignal> = {}): TradingSignal {
+  static createTradingSignal(
+    overrides: Partial<TradingSignal> = {},
+  ): TradingSignal {
     const actions = ['buy', 'sell', 'hold'] as const;
 
     return {
@@ -48,7 +54,12 @@ xport class TestDataFactory {
     };
   }
 
-  static createBulkSentimentData(count: number, symbol: string = 'BTC'): SentimentData[] {
-    return Array(count).fill(0).map(() => this.createSentimentData({ symbol }));
+  static createBulkSentimentData(
+    count: number,
+    symbol: string = 'BTC',
+  ): SentimentData[] {
+    return Array(count)
+      .fill(0)
+      .map(() => this.createSentimentData({ symbol }));
   }
 }

@@ -9,7 +9,7 @@ import { Transaction, TransactionType } from '../entities/transaction.entity';
 import { PortfolioService } from './portfolio.service';
 import { TradingExecutionService } from './trading-execution.service';
 
-interface RebalancingAnalysis {
+export interface RebalancingAnalysis {
   portfolioId: string;
   currentAllocations: Record<string, number>;
   targetAllocations: Record<string, number>;
@@ -48,7 +48,7 @@ export class RebalancingService {
     for (const portfolio of portfolios) {
       if (portfolio.rebalancingSettings?.enabled) {
         const analysis = await this.analyzeRebalancing(portfolio.id);
-        
+
         if (analysis.rebalancingNeeded) {
           await this.executeRebalancing(portfolio.id, { automatic: true });
         }
@@ -58,27 +58,31 @@ export class RebalancingService {
 
   async analyzeRebalancing(portfolioId: string): Promise<RebalancingAnalysis> {
     const portfolio = await this.portfolioService.getPortfolioById(portfolioId);
-    const holdings = await this.portfolioService.getPortfolioHoldings(portfolioId);
-    
+    const holdings =
+      await this.portfolioService.getPortfolioHoldings(portfolioId);
+
     const currentAllocations: Record<string, number> = {};
     const targetAllocations = portfolio.targetAllocation || {};
     const deviations: Record<string, number> = {};
-    
+
     // Calculate current allocations
     for (const holding of holdings) {
       const allocationKey = holding.assetClass;
-      currentAllocations[allocationKey] = (currentAllocations[allocationKey] || 0) + holding.allocationPercentage;
+      currentAllocations[allocationKey] =
+        (currentAllocations[allocationKey] || 0) + holding.allocationPercentage;
     }
 
     // Calculate deviations
     let rebalancingNeeded = false;
     const threshold = portfolio.rebalancingSettings?.threshold || 5;
 
-    for (const [assetClass, targetPercent] of Object.entries(targetAllocations)) {
+    for (const [assetClass, targetPercent] of Object.entries(
+      targetAllocations,
+    )) {
       const currentPercent = currentAllocations[assetClass] || 0;
       const deviation = Math.abs(currentPercent - targetPercent);
       deviations[assetClass] = deviation;
-      
+
       if (deviation > threshold) {
         rebalancingNeeded = true;
       }
@@ -106,25 +110,33 @@ export class RebalancingService {
     holdings: Holding[],
     currentAllocations: Record<string, number>,
     targetAllocations: Record<string, number>,
-  ): Array<{ symbol: string; action: 'buy' | 'sell'; quantity: number; amount: number }> {
+  ): Array<{
+    symbol: string;
+    action: 'buy' | 'sell';
+    quantity: number;
+    amount: number;
+  }> {
     const trades = [];
     const totalValue = portfolio.totalValue;
 
-    for (const [assetClass, targetPercent] of Object.entries(targetAllocations)) {
+    for (const [assetClass, targetPercent] of Object.entries(
+      targetAllocations,
+    )) {
       const currentPercent = currentAllocations[assetClass] || 0;
       const targetValue = (targetPercent / 100) * totalValue;
       const currentValue = (currentPercent / 100) * totalValue;
       const difference = targetValue - currentValue;
 
-      if (Math.abs(difference) > 100) { // Only trade if difference > $100
+      if (Math.abs(difference) > 100) {
+        // Only trade if difference > $100
         const action = difference > 0 ? 'buy' : 'sell';
         const amount = Math.abs(difference);
-        
+
         // Find representative holding for this asset class
-        const holding = holdings.find(h => h.assetClass === assetClass);
+        const holding = holdings.find((h) => h.assetClass === assetClass);
         if (holding) {
           const quantity = amount / holding.currentPrice;
-          
+
           trades.push({
             symbol: holding.symbol,
             action,
@@ -138,20 +150,26 @@ export class RebalancingService {
     return trades;
   }
 
-  async executeRebalancing(portfolioId: string, options: any = {}): Promise<void> {
+  async executeRebalancing(
+    portfolioId: string,
+    options: any = {},
+  ): Promise<void> {
     try {
       const analysis = await this.analyzeRebalancing(portfolioId);
-      const portfolio = await this.portfolioService.getPortfolioById(portfolioId);
+      const portfolio =
+        await this.portfolioService.getPortfolioById(portfolioId);
 
       for (const trade of analysis.suggestedTrades) {
         // Execute trade through trading service
-        const executionResult = await this.tradingExecutionService.executeTrade({
-          portfolioId,
-          symbol: trade.symbol,
-          action: trade.action,
-          quantity: trade.quantity,
-          orderType: 'market',
-        });
+        const executionResult = await this.tradingExecutionService.executeTrade(
+          {
+            portfolioId,
+            symbol: trade.symbol,
+            action: trade.action,
+            quantity: trade.quantity,
+            orderType: 'market',
+          },
+        );
 
         if (executionResult.success) {
           // Record transaction
@@ -169,7 +187,6 @@ export class RebalancingService {
 
       // Update portfolio values after rebalancing
       await this.portfolioService.updatePortfolioValue(portfolioId);
-      
     } catch (error) {
       console.error('Rebalancing execution failed:', error);
       throw error;
