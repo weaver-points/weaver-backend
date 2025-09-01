@@ -24,6 +24,7 @@ import {
 } from './zk-kyc/entities/zk-kyc-verification.entity';
 import { OnboardingModule } from './user-onboarding/user-onboarding.module';
 import { EventManagementModule } from './event-management/event-management.module';
+import { SocialTradingModule } from './social-trading/social-trading.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { EventManagementModule } from './event-management/event-management.modul
     ZkKycModule,
     OnboardingModule,
     EventManagementModule,
+    SocialTradingModule,
   ],
 })
 export class AppModule {}
