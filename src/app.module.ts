@@ -25,6 +25,7 @@ import {
 import { OnboardingModule } from './user-onboarding/user-onboarding.module';
 import { EventManagementModule } from './event-management/event-management.module';
 import { BridgeModule } from './bridge-integration/bridge-integration.module';
+import {AnalyticsDashboardModule} from './analytics-dashboard.module';
 
 @Module({
   imports: [
@@ -46,6 +47,8 @@ import { BridgeModule } from './bridge-integration/bridge-integration.module';
     OnboardingModule,
     EventManagementModule,
     BridgeModule,
+    AnalyticsDashboardModule,
+
   ],
 })
 export class AppModule {}
