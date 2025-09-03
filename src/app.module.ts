@@ -24,7 +24,9 @@ import {
 } from './zk-kyc/entities/zk-kyc-verification.entity';
 import { OnboardingModule } from './user-onboarding/user-onboarding.module';
 import { EventManagementModule } from './event-management/event-management.module';
+import { BridgeModule } from './bridge-integration/bridge-integration.module';
 import {AnalyticsDashboardModule} from './analytics-dashboard.module';
+
 @Module({
   imports: [
     ConfigModule,
@@ -44,7 +46,9 @@ import {AnalyticsDashboardModule} from './analytics-dashboard.module';
     ZkKycModule,
     OnboardingModule,
     EventManagementModule,
+    BridgeModule,
     AnalyticsDashboardModule,
+
   ],
 })
 export class AppModule {}
