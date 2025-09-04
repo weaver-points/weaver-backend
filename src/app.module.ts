@@ -24,9 +24,8 @@ import {
 } from './zk-kyc/entities/zk-kyc-verification.entity';
 import { OnboardingModule } from './user-onboarding/user-onboarding.module';
 import { EventManagementModule } from './event-management/event-management.module';
-
 import { SocialTradingModule } from './social-trading/social-trading.module';
-
+import { BridgeModule } from './bridge-integration/bridge-integration.module';
 import {AnalyticsDashboardModule} from './analytics-dashboard.module';
 
 @Module({
@@ -48,9 +47,8 @@ import {AnalyticsDashboardModule} from './analytics-dashboard.module';
     ZkKycModule,
     OnboardingModule,
     EventManagementModule,
-
     SocialTradingModule,
-
+    BridgeModule,
     AnalyticsDashboardModule,
 
   ],

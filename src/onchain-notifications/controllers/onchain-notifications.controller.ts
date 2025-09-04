@@ -1,32 +1,58 @@
-import { Controller, Get, Post, Param, Query, Patch, Delete, UseGuards, HttpCode, HttpStatus } from "@nestjs/common"
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from "@nestjs/swagger"
-import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import { OnchainNotificationsService } from "../services/onchain-notifications.service";
-import { CreateOnchainNotificationDto } from "../dto/create-onchain-notification.dto";
-import { NotificationStatus, NotificationType } from "../enums/notification.enums";
-import { UpdateNotificationPreferencesDto } from "../dto/update-notification-preferences.dto";
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Patch,
+  Delete,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { OnchainNotificationsService } from '../services/onchain-notifications.service';
+import { CreateOnchainNotificationDto } from '../dto/create-onchain-notification.dto';
+import {
+  NotificationStatus,
+  NotificationType,
+} from '../enums/notification.enums';
+import { UpdateNotificationPreferencesDto } from '../dto/update-notification-preferences.dto';
 
-@ApiTags("Onchain Notifications")
-@Controller("onchain-notifications")
+@ApiTags('Onchain Notifications')
+@Controller('onchain-notifications')
 @UseGuards(JwtAuthGuard)
 export class OnchainNotificationsController {
-  constructor(private readonly onchainNotificationsService: OnchainNotificationsService) {}
+  constructor(
+    private readonly onchainNotificationsService: OnchainNotificationsService,
+  ) {}
 
   @Post()
-  @Roles("admin", "protocol")
-  @ApiOperation({ summary: "Send an onchain notification" })
-  @ApiResponse({ status: 201, description: "Notification sent successfully" })
-  @ApiResponse({ status: 400, description: "Invalid notification data" })
+  @Roles('admin', 'protocol')
+  @ApiOperation({ summary: 'Send an onchain notification' })
+  @ApiResponse({ status: 201, description: 'Notification sent successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid notification data' })
   async sendNotification(createNotificationDto: CreateOnchainNotificationDto) {
-    return this.onchainNotificationsService.sendNotification(createNotificationDto)
+    return this.onchainNotificationsService.sendNotification(
+      createNotificationDto,
+    );
   }
 
-  @Post("batch")
-  @Roles("admin", "protocol")
-  @ApiOperation({ summary: "Send multiple onchain notifications" })
-  @ApiResponse({ status: 201, description: "Batch notifications processed" })
+  @Post('batch')
+  @Roles('admin', 'protocol')
+  @ApiOperation({ summary: 'Send multiple onchain notifications' })
+  @ApiResponse({ status: 201, description: 'Batch notifications processed' })
   async batchSendNotifications(notifications: CreateOnchainNotificationDto[]) {
-    return this.onchainNotificationsService.batchSendNotifications(notifications)
+    return this.onchainNotificationsService.batchSendNotifications(
+      notifications,
+    );
   }
 
   @Get(':id/status')
@@ -37,14 +63,14 @@ export class OnchainNotificationsController {
     return this.onchainNotificationsService.getNotificationStatus(id);
   }
 
-  @Get("user/:address")
-  @Roles("admin", "user")
-  @ApiOperation({ summary: "Get user notifications" })
-  @ApiParam({ name: "address", description: "User Starknet address" })
-  @ApiQuery({ name: "status", required: false, enum: NotificationStatus })
-  @ApiQuery({ name: "type", required: false, enum: NotificationType })
-  @ApiQuery({ name: "limit", required: false, type: Number })
-  @ApiQuery({ name: "offset", required: false, type: Number })
+  @Get('user/:address')
+  @Roles('admin', 'user')
+  @ApiOperation({ summary: 'Get user notifications' })
+  @ApiParam({ name: 'address', description: 'User Starknet address' })
+  @ApiQuery({ name: 'status', required: false, enum: NotificationStatus })
+  @ApiQuery({ name: 'type', required: false, enum: NotificationType })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
   async getUserNotifications(
     @Param('address') address: string,
     @Query('status') status?: NotificationStatus,
@@ -57,19 +83,22 @@ export class OnchainNotificationsController {
       type,
       limit,
       offset,
-    })
+    });
   }
 
-  @Patch("preferences/:address")
-  @Roles("admin", "user")
-  @ApiOperation({ summary: "Update user notification preferences" })
-  @ApiParam({ name: "address", description: "User Starknet address" })
+  @Patch('preferences/:address')
+  @Roles('admin', 'user')
+  @ApiOperation({ summary: 'Update user notification preferences' })
+  @ApiParam({ name: 'address', description: 'User Starknet address' })
   @HttpCode(HttpStatus.NO_CONTENT)
   async updateNotificationPreferences(
     @Param('address') address: string,
     preferences: UpdateNotificationPreferencesDto,
   ) {
-    await this.onchainNotificationsService.updateNotificationPreferences(address, preferences)
+    await this.onchainNotificationsService.updateNotificationPreferences(
+      address,
+      preferences,
+    );
   }
 
   @Get('preferences/:address')
@@ -80,14 +109,14 @@ export class OnchainNotificationsController {
     return this.onchainNotificationsService.getUserPreferences(address);
   }
 
-  @Get("history/:address")
-  @Roles("admin", "user")
-  @ApiOperation({ summary: "Get user notification history" })
-  @ApiParam({ name: "address", description: "User Starknet address" })
-  @ApiQuery({ name: "startDate", required: false, type: Date })
-  @ApiQuery({ name: "endDate", required: false, type: Date })
-  @ApiQuery({ name: "limit", required: false, type: Number })
-  @ApiQuery({ name: "offset", required: false, type: Number })
+  @Get('history/:address')
+  @Roles('admin', 'user')
+  @ApiOperation({ summary: 'Get user notification history' })
+  @ApiParam({ name: 'address', description: 'User Starknet address' })
+  @ApiQuery({ name: 'startDate', required: false, type: Date })
+  @ApiQuery({ name: 'endDate', required: false, type: Date })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'offset', required: false, type: Number })
   async getNotificationHistory(
     @Param('address') address: string,
     @Query('startDate') startDate?: Date,
@@ -100,7 +129,7 @@ export class OnchainNotificationsController {
       endDate,
       limit,
       offset,
-    })
+    });
   }
 
   @Post(':id/retry')
@@ -121,7 +150,12 @@ export class OnchainNotificationsController {
     await this.onchainNotificationsService.cancelNotification(id);
   }
 }
-function Roles(arg0: string, arg1: string): (target: OnchainNotificationsController, propertyKey: "sendNotification", descriptor: TypedPropertyDescriptor<(createNotificationDto: CreateOnchainNotificationDto) => Promise<...>>) => void | TypedPropertyDescriptor<...> {
-  throw new Error("Function not implemented.");
+function Roles(arg0: string, arg1: string) {
+  return (
+    target: Object,
+    propertyKey: string | symbol,
+    descriptor: PropertyDescriptor,
+  ) => {
+    throw new Error('Function not implemented.');
+  };
 }
-
